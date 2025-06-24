@@ -1,3 +1,13 @@
+from flask import Flask, render_template, request, jsonify
+import requests
+import os
+
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
 @app.route("/get_price")
 def get_price():
     coin = request.args.get("coin", "bitcoin").lower()
@@ -17,3 +27,7 @@ def get_price():
             return jsonify({"error": "Error parsing API response"}), 500
     else:
         return jsonify({"error": "API request failed"}), 500
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=True, host="0.0.0.0", port=port)
