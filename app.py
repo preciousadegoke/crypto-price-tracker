@@ -5,13 +5,16 @@ import os
 app = Flask(__name__)
 
 @app.route('/')
-def interface():
+def index():
     return render_template('index.html')
 
-@app.route('/price', methods=['POST'])
+@app.route('/get_price')
 def get_price():
-    coin = request.form.get('coin')
-    url = f'https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd'
+    coin = request.args.get('coin')
+    if not coin:
+        return jsonify({'error': 'Missing coin parameter'})
+
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=usd"
     try:
         response = requests.get(url)
         data = response.json()
@@ -19,11 +22,10 @@ def get_price():
             price = data[coin]['usd']
             return jsonify({'price': price})
         else:
-            return jsonify({'error': 'Invalid coin name'}), 400
+            return jsonify({'error': f"Coin '{coin}' not found."})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Error fetching price'})
 
-# Use Render-compatible host and port
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
