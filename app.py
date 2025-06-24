@@ -14,19 +14,19 @@ def get_price():
     currency = request.args.get("currency", "usd").lower()
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies={currency}"
 
+    # ✅ Debugging line to check the requested URL
+    print(f"Fetching: {url}")  
+
     try:
         response = requests.get(url)
+        response.raise_for_status()
         data = response.json()
-        if coin in data and currency in data[coin]:
-            return jsonify({
-                "coin": coin,
-                "currency": currency,
-                "price": data[coin][currency]
-            })
+        if coin in data:
+            return jsonify({"price": data[coin][currency]})
         else:
-            return jsonify({"error": "Coin or currency not found"}), 404
+            return jsonify({"error": "Invalid coin name"}), 400
     except Exception as e:
-        return jsonify({"error": "Error fetching price"}), 500
+        return jsonify({"error": "API request failed"}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
