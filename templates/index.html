@@ -1,130 +1,142 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crypto Price Tracker</title>
+  <title>🪙 Crypto Price Tracker</title>
   <style>
+    :root {
+      --bg-light: #f9f9f9;
+      --text-light: #1a1a1a;
+      --bg-dark: #121212;
+      --text-dark: #f9f9f9;
+      --primary: #4CAF50;
+    }
+    [data-theme="light"] {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+    [data-theme="dark"] {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
     body {
-      margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: #0f0f0f;
-      color: #ffffff;
+      margin: 0;
+      padding: 2rem;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
     }
-
-    .glass-container {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 20px;
-      padding: 30px 40px;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: center;
-      width: 90%;
-      max-width: 500px;
-    }
-
     h1 {
       margin-bottom: 1rem;
-      font-size: 1.8rem;
     }
-
-    input[type="text"] {
+    select, input, button {
       padding: 10px;
+      margin: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
       font-size: 1rem;
-      width: 70%;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      margin-right: 5px;
-      background-color: #222;
-      color: white;
     }
-
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 10px;
-      background-color: #00c896;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #00a57a;
-    }
-
-    #price {
-      margin-top: 20px;
+    #result {
+      margin-top: 1rem;
       font-size: 1.2rem;
-      color: #ffd700;
     }
-
-    .loader {
-      margin-top: 20px;
+    .spinner {
       display: none;
-      border: 4px solid rgba(255, 255, 255, 0.2);
-      border-top: 4px solid #00c896;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      animation: spin 1s linear infinite;
-      margin-left: auto;
-      margin-right: auto;
+      margin-top: 1rem;
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .spinner::after {
+      content: "⏳ Loading...";
+      font-size: 1rem;
+      color: gray;
+    }
+    .toggle {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+    .trending {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #aaa;
+      width: 100%;
+      max-width: 500px;
     }
   </style>
 </head>
 <body>
-  <div class="glass-container">
-    <h1>🪙 Crypto Price Tracker</h1>
-    <input type="text" id="coinInput" placeholder="Enter coin (e.g., bitcoin)" />
-    <button onclick="getPrice()">Check</button>
-    <div class="loader" id="loader"></div>
-    <p id="price"></p>
+  <button class="toggle" onclick="toggleTheme()">🌙 Toggle Theme</button>
+  <h1>🪙 Crypto Price Tracker</h1>
+  <input type="text" id="coinInput" placeholder="e.g., solana" />
+  <select id="currencySelect">
+    <option value="usd">USD</option>
+    <option value="ngn">NGN</option>
+    <option value="eur">EUR</option>
+    <option value="gbp">GBP</option>
+    <option value="jpy">JPY</option>
+  </select>
+  <button onclick="fetchPrice()">Check</button>
+  <div class="spinner" id="loadingSpinner"></div>
+  <div id="result"></div>
+
+  <div class="trending">
+    <h3>🔥 Trending Coins</h3>
+    <ul id="trendingList"></ul>
   </div>
 
   <script>
-    async function getPrice() {
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === "light" ? "dark" : "light";
+    }
+
+    function fetchPrice() {
       const coin = document.getElementById("coinInput").value.trim().toLowerCase();
-      const priceEl = document.getElementById("price");
-      const loader = document.getElementById("loader");
+      const currency = document.getElementById("currencySelect").value.toLowerCase();
+      const result = document.getElementById("result");
+      const spinner = document.getElementById("loadingSpinner");
 
       if (!coin) {
-        priceEl.textContent = "Please enter a valid coin name.";
+        result.innerText = "Please enter a coin name.";
         return;
       }
 
-      priceEl.textContent = "";
-      loader.style.display = "block";
+      result.innerText = "";
+      spinner.style.display = "block";
 
-      try {
-        const response = await fetch(`/get_price?coin=${coin}`);
-        const data = await response.json();
-
-        loader.style.display = "none";
-
-        if (data.price) {
-          priceEl.textContent = `Current price of ${coin}: $${data.price}`;
-        } else {
-          priceEl.textContent = data.error || "Something went wrong.";
-        }
-      } catch (error) {
-        loader.style.display = "none";
-        priceEl.textContent = "Failed to fetch data.";
-      }
+      fetch(`/get_price?coin=${coin}&currency=${currency}`)
+        .then(res => res.json())
+        .then(data => {
+          spinner.style.display = "none";
+          if (data.price) {
+            result.innerText = `1 ${coin.toUpperCase()} = ${data.price} ${currency.toUpperCase()}`;
+          } else {
+            result.innerText = data.error || "Error fetching price.";
+          }
+        })
+        .catch(() => {
+          spinner.style.display = "none";
+          result.innerText = "API request failed";
+        });
     }
+
+    function loadTrending() {
+      fetch("https://api.coingecko.com/api/v3/search/trending")
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("trendingList");
+          list.innerHTML = "";
+          data.coins.slice(0, 5).forEach((item) => {
+            const li = document.createElement("li");
+            li.innerText = `${item.item.name} (${item.item.symbol.toUpperCase()})`;
+            list.appendChild(li);
+          });
+        });
+    }
+
+    loadTrending();
   </script>
 </body>
 </html>
