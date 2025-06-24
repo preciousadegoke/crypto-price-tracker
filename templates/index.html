@@ -1,0 +1,84 @@
+<!-- crypto_price_tracker/templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto Price Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f1f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px #ccc;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        #result {
+            margin-top: 20px;
+            background-color: #dff0d8;
+            padding: 15px;
+            border-radius: 5px;
+            color: #3c763d;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crypto Price Tracker</h1>
+    <form id="priceForm">
+        <select id="coin" required>
+            <option value="bitcoin">Bitcoin</option>
+            <option value="ethereum">Ethereum</option>
+            <option value="dogecoin">Dogecoin</option>
+        </select>
+        <select id="currency" required>
+            <option value="usd">USD</option>
+            <option value="ngn">NGN</option>
+            <option value="eur">EUR</option>
+        </select>
+        <button type="submit">Get Price</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('priceForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const coin = document.getElementById('coin').value;
+            const currency = document.getElementById('currency').value;
+
+            fetch(`/price?coin=${coin}&currency=${currency}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.price) {
+                        document.getElementById('result').style.display = 'block';
+                        document.getElementById('result').innerText = 
+                            `1 ${data.coin.toUpperCase()} = ${data.price} ${data.currency.toUpperCase()}`;
+                    } else {
+                        document.getElementById('result').style.display = 'block';
+                        document.getElementById('result').innerText = data.error;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('result').innerText = 'An error occurred.';
+                });
+        });
+    </script>
+</body>
+</html>
